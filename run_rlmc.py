@@ -143,6 +143,7 @@ class Env:
         self.error = train_error
         self.bm_preds = np.load(f'{DATA_DIR}/bm_train_preds.npy')
         self.y = train_y
+        self.attacked_y=np.load(f'{DATA_DIR}/attacked.npy')
     
     def reward_func(self, idx, action):
         if isinstance(action, int):
@@ -151,8 +152,8 @@ class Env:
             action = tmp
         weighted_y = np.multiply(action.reshape(-1, 1), self.bm_preds[idx])
         weighted_y = weighted_y.sum(axis=0)
-        new_mape = mean_absolute_percentage_error(inv_trans(self.y[idx]), inv_trans(weighted_y))
-        new_mae = mean_absolute_error(inv_trans(self.y[idx]), inv_trans(weighted_y))
+        new_mape = -mean_absolute_percentage_error(inv_trans(self.y[idx]), inv_trans(weighted_y))
+        new_mae = -mean_absolute_error(inv_trans(self.y[idx]), inv_trans(weighted_y))- mean_absolute_error(inv_trans(self.y[idx]),self.attacked_y[idx])
         new_error = np.array([*self.error[idx], new_mape])
         rank = np.where(np.argsort(new_error) == len(new_error) - 1)[0][0]
         return rank, new_mape, new_mae 
